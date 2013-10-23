@@ -16,7 +16,7 @@ def read(fname):
 requires = ['']
 
 setup(
-    name='bitmm-exchange-wrapper',
+    name='bitmm.xwrap',
     version='0.1',
     description=
         ('Python library to communicate with the BitMyMoney exchange '

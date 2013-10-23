@@ -5,10 +5,10 @@ import requests
 import httplib
 import decimal
 
-from bitmm.exchangewrapper import client
+from bitmm.xwrap import client
 
 
-class ExchangeWrapperTestBase(TestCase):
+class XWrapTestBase(TestCase):
     def setUp(self):
         self._org_get = requests.get
         self._org_post = requests.post
@@ -45,10 +45,10 @@ class ExchangeWrapperTestBase(TestCase):
         return response
 
 
-class BitMMExchangeWrapperTestCase(ExchangeWrapperTestBase):
+class XWrapTestCase(XWrapTestBase):
     def setUp(self):
-        super(BitMMExchangeWrapperTestCase, self).setUp()
-        self.client = client.BitMMExchangeWrapper()
+        super(XWrapTestCase, self).setUp()
+        self.client = client.XWrap()
 
     def test_balance(self):
         self.responses = [

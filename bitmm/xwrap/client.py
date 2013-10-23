@@ -48,7 +48,7 @@ def call(url, method='get', username=None, password=None, data=None):
     return content
 
 
-class BitMMExchangeWrapper(object):
+class XWrap(object):
     def __init__(self, baseurl='http://localhost:8000'):
         if baseurl.endswith('/'):
             baseurl = baseurl[:-1]
@@ -168,10 +168,3 @@ class Backend(object):
             self, path, method='get', username=None, password=None, **kwargs):
         url = '%s/exchanges/%s/%s' % (self.baseurl, self.id, path)
         return call(url, method, self.username, self.password, data=kwargs)
-
-"""
-xw = BitMMExchangeWrapper()
-backend = xw.list_backends('username', 'password', 'mtgox')[0]
-print backend.balance()
-result = backend.buy('EUR', 'BTC', 1)
-"""
