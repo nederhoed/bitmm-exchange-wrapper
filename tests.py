@@ -109,13 +109,12 @@ class XWrapTestCase(XWrapTestBase):
 
     def test_exchange_rates(self):
         self.responses = [
-            (200, {'Content-Type': 'application/json'}, json.dumps({
-                'results': [{
+            (200, {'Content-Type': 'application/json'}, json.dumps([{
                     'id': '1',
                     'exchange': 'Test',
                     'buy': '0.123',
                     'sell': '0.120',
-                }]})),
+                }])),
         ]
         result = self.client.exchange_rates('EUR', 'BTC')
         self.assertEquals(

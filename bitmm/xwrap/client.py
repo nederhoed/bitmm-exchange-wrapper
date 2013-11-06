@@ -75,7 +75,7 @@ class XWrap(object):
             '/exchange_rates/?from=%s&to=%s' % (
                 urllib.quote(currency), urllib.quote(asset)))
         ret = []
-        for rateinfo in response['results']:
+        for rateinfo in response:
             ret.append({
                 'id': rateinfo['id'],
                 'exchange': rateinfo['exchange'],
