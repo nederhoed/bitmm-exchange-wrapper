@@ -6,6 +6,8 @@ import datetime
 
 import mtgoxexp
 
+XWRAP_URL = 'http://localhost:8000'
+
 def toqs(data):
     """Convert a dict to a (GET) query string
     """
@@ -41,7 +43,11 @@ def call(url, method='get', username=None, password=None, data=None):
     response = reqmethod(url, **kwargs)
     if response.status_code >= 500:
         # server error, we assume no JSON has been returned
-        raise APIError(response.content or response.reason)
+        if response.headers['content-type'] == 'application/json':
+            error = json.loads(response.content)
+        else:
+            error = response.reason
+        raise APIError(error)
     content = json.loads(response.content)
     if response.status_code < 200 or response.status_code >= 400:
         raise APIError(content['detail'])
@@ -49,7 +55,7 @@ def call(url, method='get', username=None, password=None, data=None):
 
 
 class XWrap(object):
-    def __init__(self, baseurl='http://localhost:8000'):
+    def __init__(self, baseurl=XWRAP_URL):
         if baseurl.endswith('/'):
             baseurl = baseurl[:-1]
         self.baseurl = baseurl
@@ -58,15 +64,6 @@ class XWrap(object):
         """Returns a list of all supported exchange back-ends
         """
         return self._call('/list_exchanges/')
-
-    def balance(self, username, password):
-        """Returns the balance for each exchange back-end
-        """
-        ret = self._call('balance', username=username, password=password)
-        for entry in ret:
-            for key, value in entry['balance'].items():
-                entry['balance'][key] = decimal.Decimal(value)
-        return ret
 
     def exchange_rates(self, currency, asset):
         """Returns a list of exchange rates for all supported back-ends
@@ -84,6 +81,15 @@ class XWrap(object):
             })
         return ret
 
+    def balance(self, username, password):
+        """Returns the balance for each exchange back-end
+        """
+        ret = self._call('balance', username=username, password=password)
+        for entry in ret:
+            for key, value in entry['balance'].items():
+                entry['balance'][key] = decimal.Decimal(value)
+        return ret
+
     def list_backends(
             self, username, password, exchange=None, active_only=True):
         """Returns a list of backends for the user
@@ -93,9 +99,7 @@ class XWrap(object):
                 'exchanges/', username=username, password=password):
             if exchange is None or exchange == backend['exchange']:
                 ret.append(Backend(
-                    backend['id'], username, password,
-                    backend['exchange'], backend['username'],
-                    backend['apikey'], self.baseurl))
+                    backend['id'], username, password, self.baseurl))
         return ret
 
     def create_backend(
@@ -117,8 +121,7 @@ class XWrap(object):
         data = self._call(
             'exchanges/%s' % (id,), username=username, password=password)
         return Backend(
-            id, username, password, apiusername=data['username'],
-            apikey=data['apikey'], baseurl=self.baseurl)
+            id, username, password, baseurl=self.baseurl)
 
     def _call(
             self, path, method='get', username=None, password=None, **kwargs):
@@ -129,16 +132,10 @@ class XWrap(object):
 
 
 class Backend(object):
-    def __init__(
-            self, id, username, password, exchange=None,
-            apiusername=None, apikey=None,
-            baseurl='http://localhost:8000'):
+    def __init__(self, id, username, password, baseurl=XWRAP_URL):
         self.id = id
         self.username = username
         self.password = password
-        self.exchange = exchange
-        self.apiusername = apiusername
-        self.apikey = apikey
         if baseurl.endswith('/'):
             baseurl = baseurl[:-1]
         self.baseurl = baseurl
@@ -159,12 +156,16 @@ class Backend(object):
     def buy(self, currency, asset, amount):
         """Buy bitcoins at this back-end
         """
+        return self._call(
+            'buy', 'post', currency=currency, asset=asset,
+            amount=str(decimal.Decimal(amount)))
 
     def sell(self, currency, asset, amount):
         """Sell bitcoins at this back-end
         """
+        return self._call(
+            'sell', 'post', currency=currency, asset=asset, amount=amount)
 
-    def _call(
-            self, path, method='get', username=None, password=None, **kwargs):
+    def _call(self, path, method='get', **kwargs):
         url = '%s/exchanges/%s/%s' % (self.baseurl, self.id, path)
         return call(url, method, self.username, self.password, data=kwargs)
