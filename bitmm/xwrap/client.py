@@ -99,12 +99,13 @@ class XWrap(object):
                 'exchanges/', username=username, password=password):
             if exchange is None or exchange == backend['exchange']:
                 ret.append(Backend(
-                    backend['id'], username, password, self.baseurl))
+                    backend['id'], username, password, backend['exchange'],
+                    self.baseurl))
         return ret
 
     def create_backend(
             self, username, password, exchange, uname, key, secret):
-        return self._call(
+        ret = self._call(
             'exchanges/', method='post',
             username=username, password=password,
             data={
@@ -114,6 +115,7 @@ class XWrap(object):
                 'apikey': key,
                 'apisecret': secret,
             })
+        return Backend(ret['id'], username, password, ret['exchange'])
 
     def backend(self, id, username, password):
         """Retrieve a backend by id
@@ -121,7 +123,7 @@ class XWrap(object):
         data = self._call(
             'exchanges/%s' % (id,), username=username, password=password)
         return Backend(
-            id, username, password, baseurl=self.baseurl)
+            id, username, password, data['exchange'], baseurl=self.baseurl)
 
     def _call(
             self, path, method='get', username=None, password=None, **kwargs):
@@ -132,10 +134,13 @@ class XWrap(object):
 
 
 class Backend(object):
-    def __init__(self, id, username, password, baseurl=XWRAP_URL):
+    def __init__(
+            self, id, username, password, exchange='unknown',
+            baseurl=XWRAP_URL):
         self.id = id
         self.username = username
         self.password = password
+        self.exchange = exchange
         if baseurl.endswith('/'):
             baseurl = baseurl[:-1]
         self.baseurl = baseurl
@@ -154,17 +159,34 @@ class Backend(object):
         return self._call('exchange_rate', **{'from': currency, 'to': asset})
 
     def buy(self, currency, asset, amount):
-        """Buy bitcoins at this back-end
+        """Buy assets at this back-end
         """
         return self._call(
             'buy', 'post', currency=currency, asset=asset,
             amount=str(decimal.Decimal(amount)))
 
     def sell(self, currency, asset, amount):
-        """Sell bitcoins at this back-end
+        """Sell assets at this back-end
         """
         return self._call(
-            'sell', 'post', currency=currency, asset=asset, amount=amount)
+            'sell', 'post', currency=currency, asset=asset,
+            amount=str(decimal.Decimal(amount)))
+
+    def send_to_address(self, asset, amount, address):
+        """Send assets to a certain address
+        """
+        return self._call(
+            'send_to_address', 'post', asset=asset,
+            amount=str(decimal.Decimal(amount)),
+            address=address)
+
+    def get_address(self):
+        """Return a Bitcoin address for the account
+
+        Depending on the exchange this returns either a new or an existing
+        address.
+        """
+        return self._call('get_address')
 
     def _call(self, path, method='get', **kwargs):
         url = '%s/exchanges/%s/%s' % (self.baseurl, self.id, path)

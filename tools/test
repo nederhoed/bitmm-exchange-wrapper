@@ -1,0 +1,22 @@
+#!/usr/bin/env python
+
+import getpass
+from bitmm.xwrap.client import XWrap
+
+x = XWrap()
+username = raw_input('Username:\n')
+passwd = getpass.getpass('Password:\n')
+exchange = raw_input('Exchange (mtgox/bitstamp):\n')
+backends = x.list_backends(username, passwd, exchange)
+if not backends:
+    apiusername = raw_input('API username (leave empty if not appropriate):\n')
+    apikey = raw_input('API key:\n')
+    apisecret = raw_input('API secret:\n')
+    backend = x.create_backend(
+        username, password, exchange, apiusername, apikey, apisecret)
+else:
+    backend = backends[0]
+currency = raw_input('Currency (USD/EUR):\n')
+amount = decimal.Decimal(raw_input('Amount (BTC):\n'))
+result = backend.sell(currency, 'BTC', amount)
+print 'result:', result
