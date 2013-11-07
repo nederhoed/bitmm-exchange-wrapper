@@ -1,6 +1,14 @@
 #!/usr/bin/env python
 
+import os
+import sys
+
+here = os.path.dirname(os.path.dirname(__file__))
+sys.path.append(here)
+
 import getpass
+import decimal
+
 from bitmm.xwrap.client import XWrap
 
 x = XWrap()
