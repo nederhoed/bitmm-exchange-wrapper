@@ -138,3 +138,16 @@ price.
 
 Sell 'amount' (Decimal) of 'asset' (crypto-currency string, e.g. 'BTC') using
 'currency' (currency string, e.g. 'EUR' or 'USD') for the current sell price.
+
+#### Backend.send_to_address(asset, amount, address)
+
+Send 'amount' (Decimal) of 'asset' (crypto-currency string, e.g. 'BTC') to
+'address' (a valid crypto-currency address). Returns True if the action
+was successful.
+
+#### Backend.get_address()
+
+Returns a crypto-currency address attached to your account on the back-end.
+Depending on the back-end, this may return a uniquely created address, or
+a single address if creating unique addresses is not supported by the
+back-end's API.
