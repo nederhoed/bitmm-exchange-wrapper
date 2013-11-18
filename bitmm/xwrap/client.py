@@ -63,13 +63,13 @@ class XWrap(object):
     def list_exchanges(self):
         """Returns a list of all supported exchange back-ends
         """
-        return self._call('/list_exchanges/')
+        return self._call('/list-exchanges/')
 
     def exchange_rates(self, assetpair):
         """Returns a list of exchange rates for all supported back-ends
         """
         response = self._call(
-            '/exchange_rates/%s/' % (urllib.quote(assetpair),))
+            '/exchange-rates/%s/' % (urllib.quote(assetpair),))
         ret = []
         for rateinfo in response:
             ret.append({
@@ -83,7 +83,7 @@ class XWrap(object):
     def balance(self, username, password):
         """Returns the balance for each exchange back-end
         """
-        ret = self._call('balance', username=username, password=password)
+        ret = self._call('balance/', username=username, password=password)
         for entry in ret:
             for key, value in entry['balance'].items():
                 entry['balance'][key] = decimal.Decimal(value)
@@ -120,7 +120,7 @@ class XWrap(object):
         """Retrieve a backend by id
         """
         data = self._call(
-            'exchanges/%s' % (id,), username=username, password=password)
+            'exchanges/%s/' % (id,), username=username, password=password)
         return Backend(
             id, username, password, data['exchange'], baseurl=self.baseurl)
 
@@ -147,7 +147,7 @@ class Backend(object):
     def balance(self):
         """Returns balance information for this back-end
         """
-        ret = self._call('balance')
+        ret = self._call('balance/')
         for key, value in ret.items():
             ret[key] = decimal.Decimal(value)
         return ret
@@ -155,37 +155,37 @@ class Backend(object):
     def exchange_rate(self, assetpair):
         """Returns exchange rate information for this back-end
         """
-        return self._call('exchange_rate/%s/' % (assetpair,))
+        return self._call('exchange_rate/%s/' % (urllib.quote(assetpair),))
 
     def buy(self, assetpair, amount):
         """Buy assets at this back-end
         """
         return self._call(
-            'buy/%s/' % (assetpair,), 'post',
+            'buy/%s/' % (urllib.quote(assetpair),), 'post',
             amount=str(decimal.Decimal(amount)))
 
     def sell(self, assetpair, amount):
         """Sell assets at this back-end
         """
         return self._call(
-            'sell/%s/' % (assetpair,), 'post',
+            'sell/%s/' % (urllib.quote(assetpair),), 'post',
             amount=str(decimal.Decimal(amount)))
 
     def send_to_address(self, asset, amount, address):
         """Send assets to a certain address
         """
         return self._call(
-            'send_to_address/%s/' % (asset,), 'post',
+            'send_to_address/%s/' % (urllib.quote(asset),), 'post',
             amount=str(decimal.Decimal(amount)),
             address=address)
 
-    def get_address(self):
+    def get_address(self, asset):
         """Return a Bitcoin address for the account
 
         Depending on the exchange this returns either a new or an existing
         address.
         """
-        return self._call('get_address')
+        return self._call('get_address/%s/' % (urllib.quote(asset),))
 
     def _call(self, path, method='get', **kwargs):
         url = '%s/exchanges/%s/%s' % (self.baseurl, self.id, path)
