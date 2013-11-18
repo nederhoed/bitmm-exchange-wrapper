@@ -65,12 +65,11 @@ class XWrap(object):
         """
         return self._call('/list_exchanges/')
 
-    def exchange_rates(self, currency, asset):
+    def exchange_rates(self, assetpair):
         """Returns a list of exchange rates for all supported back-ends
         """
         response = self._call(
-            '/exchange_rates/?from=%s&to=%s' % (
-                urllib.quote(currency), urllib.quote(asset)))
+            '/exchange_rates/%s/' % (urllib.quote(assetpair),))
         ret = []
         for rateinfo in response:
             ret.append({
@@ -153,30 +152,30 @@ class Backend(object):
             ret[key] = decimal.Decimal(value)
         return ret
 
-    def exchange_rate(self, currency, asset):
+    def exchange_rate(self, assetpair):
         """Returns exchange rate information for this back-end
         """
-        return self._call('exchange_rate', **{'from': currency, 'to': asset})
+        return self._call('exchange_rate/%s/' % (assetpair,))
 
-    def buy(self, currency, asset, amount):
+    def buy(self, assetpair, amount):
         """Buy assets at this back-end
         """
         return self._call(
-            'buy', 'post', currency=currency, asset=asset,
+            'buy/%s/' % (assetpair,), 'post',
             amount=str(decimal.Decimal(amount)))
 
-    def sell(self, currency, asset, amount):
+    def sell(self, assetpair, amount):
         """Sell assets at this back-end
         """
         return self._call(
-            'sell', 'post', currency=currency, asset=asset,
+            'sell/%s/' % (assetpair,), 'post',
             amount=str(decimal.Decimal(amount)))
 
     def send_to_address(self, asset, amount, address):
         """Send assets to a certain address
         """
         return self._call(
-            'send_to_address', 'post', asset=asset,
+            'send_to_address/%s/' % (asset,), 'post',
             amount=str(decimal.Decimal(amount)),
             address=address)
 

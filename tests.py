@@ -116,7 +116,7 @@ class XWrapTestCase(XWrapTestBase):
                     'sell': '0.120',
                 }])),
         ]
-        result = self.client.exchange_rates('EUR', 'BTC')
+        result = self.client.exchange_rates('EURBTC')
         self.assertEquals(
             result, [{
                 'id': '1', 'exchange': 'Test',
@@ -125,17 +125,10 @@ class XWrapTestCase(XWrapTestBase):
             }])
 
         self.responses = [
-            (400, {'Content-Type': 'application/json'}, json.dumps({
-                'detail': 'From and to are mandatory'})),
-        ]
-        self.assertRaises(
-            client.APIError, self.client.exchange_rates, '', '')
-
-        self.responses = [
             (500, {}, 'Something went wrong'),
         ]
         self.assertRaises(
-            client.APIError, self.client.exchange_rates, '', '')
+            client.APIError, self.client.exchange_rates, '')
 
     def test_list_backends(self):
         self.responses = [
