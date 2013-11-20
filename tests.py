@@ -48,21 +48,20 @@ class XWrapTestBase(TestCase):
 class XWrapTestCase(XWrapTestBase):
     def setUp(self):
         super(XWrapTestCase, self).setUp()
-        self.client = client.XWrap()
+        self.client = c = client.XWrap()
+        self.account = c.account('foo', 'bar')
 
     def test_balance(self):
         self.responses = [
             (200, {'Content-Type': 'application/json'},
                 json.dumps([
-                    {'id': 1,
-                        'exchange': 'mtgox',
+                    {'exchange': 'mtgox',
                         'balance': {
                             'EUR': '100.10',
                             'BTC': '2.0',
                         },
                     },
-                    {'id': 2,
-                        'exchange': 'bitstamp',
+                    {'exchange': 'bitstamp',
                         'balance': {
                             'USD': '1000.10',
                             'BTC': '2.1',
@@ -70,11 +69,10 @@ class XWrapTestCase(XWrapTestBase):
                     },
                 ])),
         ]
-        balance = self.client.balance('foo', 'bar')
+        balance = self.account.balance()
         self.assertEquals(len(balance), 2)
         self.assertEquals(
             balance[0], {
-                'id': 1,
                 'exchange': 'mtgox',
                 'balance': {
                     'EUR': decimal.Decimal('100.10'),
@@ -83,7 +81,6 @@ class XWrapTestCase(XWrapTestBase):
             })
         self.assertEquals(
             balance[1], {
-                'id': 2,
                 'exchange': 'bitstamp',
                 'balance': {
                     'USD': decimal.Decimal('1000.1'),
@@ -110,16 +107,15 @@ class XWrapTestCase(XWrapTestBase):
     def test_exchange_rates(self):
         self.responses = [
             (200, {'Content-Type': 'application/json'}, json.dumps([{
-                    'id': '1',
                     'exchange': 'Test',
                     'buy': '0.123',
                     'sell': '0.120',
                 }])),
         ]
-        result = self.client.exchange_rates('EURBTC')
+        result = self.account.exchange_rates('EURBTC')
         self.assertEquals(
             result, [{
-                'id': '1', 'exchange': 'Test',
+                'exchange': 'Test',
                 'buy': decimal.Decimal('0.123'),
                 'sell': decimal.Decimal('0.120'),
             }])
@@ -128,14 +124,15 @@ class XWrapTestCase(XWrapTestBase):
             (500, {}, 'Something went wrong'),
         ]
         self.assertRaises(
-            client.APIError, self.client.exchange_rates, '')
+            client.APIError, self.account.exchange_rates, '')
 
     def test_list_backends(self):
+        account = self.client.account('','')
         self.responses = [
             (401, {}, '{"detail": "Authentication creds missing"}'),
         ]
         self.assertRaises(
-            client.APIError, self.client.list_backends, '', '')
+            client.APIError, account.list_backends, '', '')
 
         self.responses = [
             (200, {'Content-Type': 'application/json'}, json.dumps([
@@ -151,7 +148,7 @@ class XWrapTestCase(XWrapTestBase):
                         'http://example.com/exchanges/1/exchange_rate',
                 }])),
         ]
-        result = self.client.list_backends('foo', 'bar')
+        result = self.account.list_backends()
         self.assertEquals(len(result), 1)
         self.assert_(isinstance(result[0], client.Backend))
         self.assertEquals(result[0].exchange, 'dummy')
@@ -169,7 +166,7 @@ class XWrapTestCase(XWrapTestBase):
                     'exchange': 'dummy',
                 })),
         ]
-        backend = self.client.backend(1, 'foo', 'bar')
+        backend = self.account.backend(1)
         self.assertEquals(backend.id, 1)
         self.assertEquals(backend.username, 'foo')
         self.assertEquals(backend.password, 'bar')
@@ -192,7 +189,7 @@ class XWrapTestCase(XWrapTestBase):
                     'USD': '1000.20',
                 })),
         ]
-        backend = self.client.backend(1, 'foo', 'bar')
+        backend = self.account.backend(1)
         balance = backend.balance()
         self.assertEquals(
             balance,

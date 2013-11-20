@@ -4,8 +4,6 @@ import json
 import decimal
 import datetime
 
-import mtgoxexp
-
 XWRAP_URL = 'http://localhost:8000'
 
 def toqs(data):
@@ -63,50 +61,65 @@ class XWrap(object):
     def list_exchanges(self):
         """Returns a list of all supported exchange back-ends
         """
-        return self._call('/list-exchanges/')
+        return self._call('supported-exchanges/')
+
+    def account(self, username, password):
+        return Account(username, password, baseurl=self.baseurl)
+
+    def _call(self, path, method='get', **kwargs):
+        if path.startswith('/'):
+            path = path[1:]
+        url = '%s/%s' % (self.baseurl, path)
+        return call(url, method, **kwargs)
+
+
+class Account(object):
+    def __init__(self, username, password, baseurl=XWRAP_URL):
+        self.username = username
+        self.password = password
+        if baseurl.endswith('/'):
+            baseurl = baseurl[:-1]
+        self.baseurl = baseurl
 
     def exchange_rates(self, assetpair):
         """Returns a list of exchange rates for all supported back-ends
         """
         response = self._call(
-            '/exchange-rates/%s/' % (urllib.quote(assetpair),))
+            'exchange-rate/%s/' % (urllib.quote(assetpair),))
         ret = []
         for rateinfo in response:
             ret.append({
-                'id': rateinfo['id'],
                 'exchange': rateinfo['exchange'],
                 'buy': decimal.Decimal(rateinfo['buy']),
                 'sell': decimal.Decimal(rateinfo['sell']),
             })
         return ret
 
-    def balance(self, username, password):
+    def balance(self):
         """Returns the balance for each exchange back-end
         """
-        ret = self._call('balance/', username=username, password=password)
+        ret = self._call('balance/')
         for entry in ret:
             for key, value in entry['balance'].items():
                 entry['balance'][key] = decimal.Decimal(value)
         return ret
 
     def list_backends(
-            self, username, password, exchange=None, active_only=True):
+            self, exchange=None, active_only=True):
         """Returns a list of backends for the user
         """
         ret = []
-        for backend in self._call(
-                'exchanges/', username=username, password=password):
+        for backend in self._call('exchange/'):
             if exchange is None or exchange == backend['exchange']:
                 ret.append(Backend(
-                    backend['id'], username, password, backend['exchange'],
-                    self.baseurl))
+                    backend['id'], self.username, self.password,
+                    backend['exchange'], self.baseurl))
         return ret
 
     def create_backend(
-            self, username, password, exchange, uname, key, secret):
+            self, exchange, uname, key, secret):
         ret = self._call(
-            'exchanges/', method='post',
-            username=username, password=password,
+            'exchange/', method='post',
             data={
                 'account': username,
                 'exchange': exchange,
@@ -114,22 +127,22 @@ class XWrap(object):
                 'apikey': key,
                 'apisecret': secret,
             })
-        return Backend(ret['id'], username, password, ret['exchange'])
+        return Backend(
+            ret['id'], self.username, self.password, ret['exchange'])
 
-    def backend(self, id, username, password):
+    def backend(self, id):
         """Retrieve a backend by id
         """
-        data = self._call(
-            'exchanges/%s/' % (id,), username=username, password=password)
+        data = self._call('exchange/%s/' % (id,))
         return Backend(
-            id, username, password, data['exchange'], baseurl=self.baseurl)
+            id, self.username, self.password,
+            data['exchange'], baseurl=self.baseurl)
 
-    def _call(
-            self, path, method='get', username=None, password=None, **kwargs):
+    def _call(self, path, method='get', **kwargs):
         if path.startswith('/'):
             path = path[1:]
-        url = '%s/%s' % (self.baseurl, path)
-        return call(url, method, username, password, **kwargs)
+        url = '%s/account/%s' % (self.baseurl, path)
+        return call(url, method, self.username, self.password, **kwargs)
 
 
 class Backend(object):
@@ -155,7 +168,8 @@ class Backend(object):
     def exchange_rate(self, assetpair):
         """Returns exchange rate information for this back-end
         """
-        return self._call('exchange_rate/%s/' % (urllib.quote(assetpair),))
+        return self._call(
+            'exchange_rate/%s/' % (urllib.quote(assetpair),))
 
     def buy(self, assetpair, amount):
         """Buy assets at this back-end
@@ -188,5 +202,5 @@ class Backend(object):
         return self._call('get_address/%s/' % (urllib.quote(asset),))
 
     def _call(self, path, method='get', **kwargs):
-        url = '%s/exchanges/%s/%s' % (self.baseurl, self.id, path)
+        url = '%s/account/exchange/%s/%s' % (self.baseurl, self.id, path)
         return call(url, method, self.username, self.password, data=kwargs)
