@@ -41,7 +41,8 @@ def call(url, method='get', username=None, password=None, data=None):
     response = reqmethod(url, **kwargs)
     if response.status_code >= 500:
         # server error, we assume no JSON has been returned
-        if response.headers['content-type'] == 'application/json':
+        if response.headers.get(
+                'content-type', '').startswith('application/json'):
             error = json.loads(response.content)
         else:
             error = response.reason
@@ -104,16 +105,19 @@ class Account(object):
                 entry['balance'][key] = decimal.Decimal(value)
         return ret
 
-    def list_backends(
-            self, exchange=None, active_only=True):
+    def list_backends(self, exchange=None, only_enabled=True):
         """Returns a list of backends for the user
         """
         ret = []
         for backend in self._call('exchange/'):
+            if only_enabled and not backend['enabled']:
+                continue
             if exchange is None or exchange == backend['exchange']:
                 ret.append(Backend(
                     backend['id'], self.username, self.password,
-                    backend['exchange'], self.baseurl))
+                    backend['exchange'], backend['apikey'],
+                    backend['enabled'], backend['available'],
+                    self.baseurl))
         return ret
 
     def create_backend(
@@ -128,7 +132,9 @@ class Account(object):
                 'apisecret': secret,
             })
         return Backend(
-            ret['id'], self.username, self.password, ret['exchange'])
+            ret['id'], self.username, self.password, ret['exchange'],
+            ret['apikey'], ret['enabled'], ret['available'],
+            baseurl=self.baseurl)
 
     def backend(self, id):
         """Retrieve a backend by id
@@ -136,7 +142,9 @@ class Account(object):
         data = self._call('exchange/%s/' % (id,))
         return Backend(
             id, self.username, self.password,
-            data['exchange'], baseurl=self.baseurl)
+            data['exchange'], data['apikey'],
+            data['enabled'], data['available'],
+            baseurl=self.baseurl)
 
     def _call(self, path, method='get', **kwargs):
         if path.startswith('/'):
@@ -148,11 +156,14 @@ class Account(object):
 class Backend(object):
     def __init__(
             self, id, username, password, exchange='unknown',
+            apikey='unknown', enabled=True, available=True,
             baseurl=XWRAP_URL):
         self.id = id
         self.username = username
         self.password = password
         self.exchange = exchange
+        self.enabled = enabled
+        self.available = available
         if baseurl.endswith('/'):
             baseurl = baseurl[:-1]
         self.baseurl = baseurl

@@ -142,6 +142,7 @@ class XWrapTestCase(XWrapTestBase):
                     'apikey': 'apikey',
                     'apisecret': '<hidden>',
                     'enabled': True,
+                    'available': True,
                     'exchange': 'dummy',
                     'url': 'http://example.com/exchanges/1/',
                     'exchange_rate_url':
@@ -163,6 +164,7 @@ class XWrapTestCase(XWrapTestBase):
                     'apikey': 'apikey',
                     'apisecret': '<hidden>',
                     'enabled': True,
+                    'available': True,
                     'exchange': 'dummy',
                 })),
         ]
@@ -181,6 +183,7 @@ class XWrapTestCase(XWrapTestBase):
                     'apikey': 'apikey',
                     'apisecret': '<hidden>',
                     'enabled': True,
+                    'available': True,
                     'exchange': 'bitstamp',
                 })),
             (200, {'Content-Type': 'application/json'},
