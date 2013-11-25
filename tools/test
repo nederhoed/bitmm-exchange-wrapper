@@ -2,29 +2,30 @@
 
 import os
 import sys
+import code
+import getpass
 
 here = os.path.dirname(os.path.dirname(__file__))
 sys.path.append(here)
 
-import getpass
-import decimal
-
 from bitmm.xwrap.client import XWrap
 
-x = XWrap()
-username = raw_input('Username:\n')
-passwd = getpass.getpass('Password:\n')
-exchange = raw_input('Exchange (mtgox/bitstamp):\n')
-backends = x.list_backends(username, passwd, exchange)
+client = XWrap(baseurl='http://localhost:8001')
+username = raw_input('Username: ')
+passwd = getpass.getpass('Password: ')
+account = client.account(username, passwd)
+exchange = raw_input('Exchange (mtgox/bitstamp): ')
+backends = account.list_backends(exchange)
 if not backends:
     apiusername = raw_input('API username (leave empty if not appropriate):\n')
     apikey = raw_input('API key:\n')
     apisecret = raw_input('API secret:\n')
-    backend = x.create_backend(
-        username, password, exchange, apiusername, apikey, apisecret)
+    backend = account.create_backend(
+        exchange, apiusername, apikey, apisecret)
 else:
     backend = backends[0]
-currency = raw_input('Currency (USD/EUR):\n')
-amount = decimal.Decimal(raw_input('Amount (BTC):\n'))
-result = backend.sell(currency, 'BTC', amount)
-print 'result:', result
+
+code.interact(
+    'Use the `client` variable for public methods, `account` for private '
+    'methods and `backend` for the back-end (exchange) specific ones.',
+    local={'client': client, 'account': account, 'backend': backend})
