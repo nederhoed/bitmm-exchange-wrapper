@@ -179,8 +179,17 @@ class Backend(object):
     def exchange_rate(self, assetpair):
         """Returns exchange rate information for this back-end
         """
-        return self._call(
-            'exchange_rate/%s/' % (urllib.quote(assetpair),))
+        data = self._call('exchange_rate/%s/' % (urllib.quote(assetpair),))
+        return {
+            'buy': decimal.Decimal(data['buy']),
+            'sell': decimal.Decimal(data['sell']),
+        }
+
+    def withdraw_limits(self):
+        data = self._call('withdraw_limits/')
+        for key, value in data.iteritems():
+            data[key] = decimal.Decimal(value)
+        return data
 
     def buy(self, assetpair, amount):
         """Buy assets at this back-end
