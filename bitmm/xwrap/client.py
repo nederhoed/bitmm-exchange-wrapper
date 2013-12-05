@@ -47,7 +47,9 @@ def call(url, method='get', username=None, password=None, data=None):
         else:
             error = response.reason
         raise APIError(error)
-    content = json.loads(response.content)
+    content = None
+    if response.content:
+        content = json.loads(response.content)
     if response.status_code < 200 or response.status_code >= 400:
         raise APIError(content['detail'])
     return content
@@ -187,6 +189,8 @@ class Backend(object):
 
     def withdraw_limits(self):
         data = self._call('withdraw_limits/')
+        if data is None:
+            return None
         for key, value in data.iteritems():
             data[key] = decimal.Decimal(value)
         return data
