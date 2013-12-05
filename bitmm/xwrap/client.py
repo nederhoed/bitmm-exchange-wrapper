@@ -187,6 +187,8 @@ class Backend(object):
 
     def withdraw_limits(self):
         data = self._call('withdraw_limits/')
+        if data is None:
+            return None
         for key, value in data.iteritems():
             data[key] = decimal.Decimal(value)
         return data
