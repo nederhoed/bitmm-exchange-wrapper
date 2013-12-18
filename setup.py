@@ -28,6 +28,7 @@ setup(
     url='https://github.com/nederhoed/bitmm-exchange-wrapper',
     keywords='bitmm api bitcoin',
     packages=find_packages(),
+    namespace_packages=['bitmm'],
     test_suite="tests",
     install_requires=requires,
     classifiers = [
