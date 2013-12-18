@@ -38,18 +38,15 @@ def call(url, method='get', apikey=None, apisecret=None, data=None):
             url = '%s&%s' % (url, data)
         elif data:
             url = '%s?%s' % (url, data)
-    print 'url:', url
     if apikey:
         nonce = str(int(time.time() * 10000))
         message = '%s%s%s%s' % (nonce, apikey, url, data or '')
-        print 'message:', message
         sign = hmac.new(
             apisecret, msg=message, digestmod=hashlib.sha256
         ).hexdigest().upper()
         kwargs['headers']['Authorization'] = (
                 'BMMTokenAuth key="%s", nonce="%s", sign="%s"' % (
                     apikey, nonce, sign))
-        print 'header:', kwargs['headers']['Authorization']
     reqmethod = getattr(requests, method)
     response = reqmethod(url, **kwargs)
     if response.status_code >= 500:
