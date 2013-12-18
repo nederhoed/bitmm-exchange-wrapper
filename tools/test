@@ -11,17 +11,17 @@ sys.path.append(here)
 from bitmm.xwrap.client import XWrap
 
 client = XWrap(baseurl='http://localhost:8001')
-username = raw_input('Username: ')
-passwd = getpass.getpass('Password: ')
-account = client.account(username, passwd)
+apikey = raw_input('apikey: ')
+apisecret = getpass.getpass('apisecret: ')
+account = client.account(apikey, apisecret)
 exchange = raw_input('Exchange (mtgox/bitstamp): ')
 backends = account.list_backends(exchange)
 if not backends:
     apiusername = raw_input('API username (leave empty if not appropriate):\n')
-    apikey = raw_input('API key:\n')
-    apisecret = raw_input('API secret:\n')
+    apikey_ = raw_input('API key for the exchange:\n')
+    apisecret_ = raw_input('API secret for the exchange:\n')
     backend = account.create_backend(
-        exchange, apiusername, apikey, apisecret)
+        exchange, apiusername, apikey_, apisecret_)
 else:
     backend = backends[0]
 
