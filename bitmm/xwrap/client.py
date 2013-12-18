@@ -3,9 +3,6 @@ import requests
 import json
 import decimal
 import datetime
-import time
-import hmac
-import hashlib
 
 XWRAP_URL = 'http://localhost:8000'
 
@@ -26,30 +23,20 @@ class APIError(Exception):
     """
 
 
-def call(url, method='get', apikey=None, apisecret=None, data=None):
-    kwargs = {'headers': {}}
+def call(url, method='get', username=None, password=None, data=None):
+    kwargs = {}
     if data is not None:
         data = toqs(data)
         if method.lower() == 'post':
             kwargs['data'] = data
-            kwargs['headers']['Content-Type'] = (
-                'application/x-www-form-urlencoded')
+            kwargs['headers'] = {
+                'Content-Type': 'application/x-www-form-urlencoded'}
         elif '?' in url:
             url = '%s&%s' % (url, data)
-        elif data:
+        else:
             url = '%s?%s' % (url, data)
-    print 'url:', url
-    if apikey:
-        nonce = str(int(time.time() * 10000))
-        message = '%s%s%s%s' % (nonce, apikey, url, data or '')
-        print 'message:', message
-        sign = hmac.new(
-            apisecret, msg=message, digestmod=hashlib.sha256
-        ).hexdigest().upper()
-        kwargs['headers']['Authorization'] = (
-                'BMMTokenAuth key="%s", nonce="%s", sign="%s"' % (
-                    apikey, nonce, sign))
-        print 'header:', kwargs['headers']['Authorization']
+    if username:
+        kwargs['auth'] = (username, password)
     reqmethod = getattr(requests, method)
     response = reqmethod(url, **kwargs)
     if response.status_code >= 500:
@@ -79,8 +66,8 @@ class XWrap(object):
         """
         return self._call('supported-exchanges/')
 
-    def account(self, apikey, apisecret):
-        return Account(apikey, apisecret, baseurl=self.baseurl)
+    def account(self, username, password):
+        return Account(username, password, baseurl=self.baseurl)
 
     def _call(self, path, method='get', **kwargs):
         if path.startswith('/'):
@@ -90,9 +77,9 @@ class XWrap(object):
 
 
 class Account(object):
-    def __init__(self, apikey, apisecret, baseurl=XWRAP_URL):
-        self.apikey = apikey
-        self.apisecret = apisecret
+    def __init__(self, username, password, baseurl=XWRAP_URL):
+        self.username = username
+        self.password = password
         if baseurl.endswith('/'):
             baseurl = baseurl[:-1]
         self.baseurl = baseurl
@@ -129,7 +116,7 @@ class Account(object):
                 continue
             if exchange is None or exchange == backend['exchange']:
                 ret.append(Backend(
-                    backend['id'], self.apikey, self.apisecret,
+                    backend['id'], self.username, self.password,
                     backend['exchange'], backend['apikey'],
                     backend['enabled'], backend['available'],
                     self.baseurl))
@@ -140,13 +127,14 @@ class Account(object):
         ret = self._call(
             'exchange/', method='post',
             data={
+                'account': username,
                 'exchange': exchange,
                 'username': uname,
                 'apikey': key,
                 'apisecret': secret,
             })
         return Backend(
-            ret['id'], self.apikey, self.apisecret, ret['exchange'],
+            ret['id'], self.username, self.password, ret['exchange'],
             ret['apikey'], ret['enabled'], ret['available'],
             baseurl=self.baseurl)
 
@@ -155,7 +143,7 @@ class Account(object):
         """
         data = self._call('exchange/%s/' % (id,))
         return Backend(
-            id, self.apikey, self.apisecret,
+            id, self.username, self.password,
             data['exchange'], data['apikey'],
             data['enabled'], data['available'],
             baseurl=self.baseurl)
@@ -164,19 +152,18 @@ class Account(object):
         if path.startswith('/'):
             path = path[1:]
         url = '%s/account/%s' % (self.baseurl, path)
-        return call(url, method, self.apikey, self.apisecret, **kwargs)
+        return call(url, method, self.username, self.password, **kwargs)
 
 
 class Backend(object):
     def __init__(
-            self, id, apikey, apisecret, exchange='unknown',
-            apikey_exchange='unknown', enabled=True, available=True,
+            self, id, username, password, exchange='unknown',
+            apikey='unknown', enabled=True, available=True,
             baseurl=XWRAP_URL):
         self.id = id
-        self.apikey = apikey
-        self.apisecret = apisecret
+        self.username = username
+        self.password = password
         self.exchange = exchange
-        self.apikey_exchange = apikey_exchange
         self.enabled = enabled
         self.available = available
         if baseurl.endswith('/'):
@@ -240,4 +227,4 @@ class Backend(object):
 
     def _call(self, path, method='get', **kwargs):
         url = '%s/account/exchange/%s/%s' % (self.baseurl, self.id, path)
-        return call(url, method, self.apikey, self.apisecret, data=kwargs)
+        return call(url, method, self.username, self.password, data=kwargs)
