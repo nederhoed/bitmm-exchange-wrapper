@@ -170,8 +170,8 @@ class XWrapTestCase(XWrapTestBase):
         ]
         backend = self.account.backend(1)
         self.assertEquals(backend.id, 1)
-        self.assertEquals(backend.username, 'foo')
-        self.assertEquals(backend.password, 'bar')
+        self.assertEquals(backend.apikey, 'foo')
+        self.assertEquals(backend.apisecret, 'bar')
 
     def test_backend_balance(self):
         self.responses = [
