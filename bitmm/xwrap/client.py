@@ -7,7 +7,7 @@ import time
 import hmac
 import hashlib
 
-XWRAP_URL = 'http://localhost:8000'
+XWRAP_URL = 'https://xwrap.bitmymoney.com/'
 
 def toqs(data):
     """Convert a dict to a (GET) query string
@@ -66,10 +66,11 @@ def call(url, method='get', apikey=None, apisecret=None, data=None):
 
 
 class XWrap(object):
-    def __init__(self, baseurl=XWRAP_URL):
+    def __init__(self, baseurl=XWRAP_URL, allow_unverified_certs=False):
         if baseurl.endswith('/'):
             baseurl = baseurl[:-1]
         self.baseurl = baseurl
+        self.allow_unverified_certs = allow_unverified_certs
 
     def list_exchanges(self):
         """Returns a list of all supported exchange back-ends
@@ -77,19 +78,26 @@ class XWrap(object):
         return self._call('supported-exchanges/')
 
     def account(self, apikey, apisecret):
-        return Account(apikey, apisecret, baseurl=self.baseurl)
+        return Account(
+            apikey, apisecret, baseurl=self.baseurl,
+            allow_unverified_certs=self.allow_unverified_certs)
 
     def _call(self, path, method='get', **kwargs):
         if path.startswith('/'):
             path = path[1:]
         url = '%s/%s' % (self.baseurl, path)
+        if self.allow_unverified_certs:
+            kwargs['verify'] = False
         return call(url, method, **kwargs)
 
 
 class Account(object):
-    def __init__(self, apikey, apisecret, baseurl=XWRAP_URL):
+    def __init__(
+            self, apikey, apisecret, baseurl=XWRAP_URL,
+            allow_unverified_certs=False):
         self.apikey = apikey
         self.apisecret = apisecret
+        self.allow_unverified_certs = allow_unverified_certs
         if baseurl.endswith('/'):
             baseurl = baseurl[:-1]
         self.baseurl = baseurl
@@ -161,6 +169,8 @@ class Account(object):
         if path.startswith('/'):
             path = path[1:]
         url = '%s/account/%s' % (self.baseurl, path)
+        if self.allow_unverified_certs:
+            kwargs['verify'] = False
         return call(url, method, self.apikey, self.apisecret, **kwargs)
 
 
