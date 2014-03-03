@@ -140,7 +140,8 @@ class Account(object):
                     backend['id'], self.apikey, self.apisecret,
                     backend['exchange'], backend['apikey'],
                     backend['enabled'], backend['available'],
-                    self.baseurl))
+                    self.baseurl,
+                    allow_unverified_certs=self.allow_unverified_certs))
         return ret
 
     def create_backend(
@@ -156,7 +157,8 @@ class Account(object):
         return Backend(
             ret['id'], self.apikey, self.apisecret, ret['exchange'],
             ret['apikey'], ret['enabled'], ret['available'],
-            baseurl=self.baseurl)
+            baseurl=self.baseurl,
+            allow_unverified_certs=self.allow_unverified_certs)
 
     def backend(self, id):
         """Retrieve a backend by id
@@ -166,21 +168,23 @@ class Account(object):
             id, self.apikey, self.apisecret,
             data['exchange'], data['apikey'],
             data['enabled'], data['available'],
-            baseurl=self.baseurl)
+            baseurl=self.baseurl,
+            allow_unverified_certs=self.allow_unverified_certs)
 
     def _call(self, path, method='get', **kwargs):
         if path.startswith('/'):
             path = path[1:]
         url = '%s/account/%s' % (self.baseurl, path)
-        kwargs['allow_unverified_certs'] = self.allow_unverified_certs
-        return call(url, method, self.apikey, self.apisecret, **kwargs)
+        return call(
+            url, method, self.apikey, self.apisecret,
+            allow_unverified_certs=self.allow_unverified_certs, **kwargs)
 
 
 class Backend(object):
     def __init__(
             self, id, apikey, apisecret, exchange='unknown',
             apikey_exchange='unknown', enabled=True, available=True,
-            baseurl=XWRAP_URL):
+            baseurl=XWRAP_URL, allow_unverified_certs=False):
         self.id = id
         self.apikey = apikey
         self.apisecret = apisecret
@@ -191,6 +195,7 @@ class Backend(object):
         if baseurl.endswith('/'):
             baseurl = baseurl[:-1]
         self.baseurl = baseurl
+        self.allow_unverified_certs = allow_unverified_certs
 
     def balance(self):
         """Returns balance information for this back-end
@@ -249,4 +254,6 @@ class Backend(object):
 
     def _call(self, path, method='get', **kwargs):
         url = '%s/account/exchange/%s/%s' % (self.baseurl, self.id, path)
-        return call(url, method, self.apikey, self.apisecret, data=kwargs)
+        return call(
+            url, method, self.apikey, self.apisecret, data=kwargs,
+            allow_unverified_certs=self.allow_unverified_certs)
