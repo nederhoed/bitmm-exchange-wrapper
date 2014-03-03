@@ -26,8 +26,12 @@ class APIError(Exception):
     """
 
 
-def call(url, method='get', apikey=None, apisecret=None, data=None):
+def call(
+        url, method='get', apikey=None, apisecret=None, data=None,
+        allow_unverified_certs=False):
     kwargs = {'headers': {}}
+    if allow_unverified_certs:
+        kwargs['verify'] = False
     if data is not None:
         data = toqs(data)
         if method.lower() == 'post':
@@ -86,8 +90,7 @@ class XWrap(object):
         if path.startswith('/'):
             path = path[1:]
         url = '%s/%s' % (self.baseurl, path)
-        if self.allow_unverified_certs:
-            kwargs['verify'] = False
+        kwargs['allow_unverified_certs'] = self.allow_unverified_certs
         return call(url, method, **kwargs)
 
 
@@ -169,8 +172,7 @@ class Account(object):
         if path.startswith('/'):
             path = path[1:]
         url = '%s/account/%s' % (self.baseurl, path)
-        if self.allow_unverified_certs:
-            kwargs['verify'] = False
+        kwargs['allow_unverified_certs'] = self.allow_unverified_certs
         return call(url, method, self.apikey, self.apisecret, **kwargs)
 
 
