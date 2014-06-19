@@ -41,7 +41,7 @@ def call(url, method='get', username=None, password=None, data=None):
     response = reqmethod(url, **kwargs)
     if response.status_code >= 500:
         # server error, we assume no JSON has been returned
-        if response.headers.get(
+        if response.get(
                 'content-type', '').startswith('application/json'):
             error = json.loads(response.content)
         else:
@@ -213,7 +213,7 @@ class Backend(object):
         """Send assets to a certain address
         """
         return self._call(
-            'send_to_address/%s/' % (urllib.quote(asset),), 'post',
+            'send/%s/' % (urllib.quote(asset),), 'post',
             amount=str(decimal.Decimal(amount)),
             address=address)
 
