@@ -4,8 +4,8 @@ import json
 import decimal
 import datetime
 import time
-import hmac
-import hashlib
+
+from bitmm.tokenauth import utils as tokenauthutils
 
 XWRAP_URL = 'https://xwrap.bitmymoney.com/'
 
@@ -45,9 +45,7 @@ def call(
     if apikey:
         nonce = str(int(time.time() * 10000))
         message = '%s%s%s%s' % (nonce, apikey, url, data or '')
-        sign = hmac.new(
-            apisecret, msg=message, digestmod=hashlib.sha256
-        ).hexdigest().upper()
+        sign = tokenauthutils.create_sign(apisecret, message)
         kwargs['headers']['Authorization'] = (
                 'BMMTokenAuth key="%s", nonce="%s", sign="%s"' % (
                     apikey, nonce, sign))
