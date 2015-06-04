@@ -50,6 +50,7 @@ def call(
                 'BMMTokenAuth key="%s", nonce="%s", sign="%s"' % (
                     apikey, nonce, sign))
     reqmethod = getattr(requests, method)
+    kwargs.setdefault('timeout', 60)
     response = reqmethod(url, **kwargs)
     if response.status_code >= 500:
         # server error, we assume no JSON has been returned
