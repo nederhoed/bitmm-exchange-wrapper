@@ -13,7 +13,7 @@ def read(fname):
 requires = ['bitmm.tokenauth']
 
 setup(
-    name='bitmm.xwrap',
+    name='bitmm.exchange_wrapper',
     version='0.1',
     description=
         ('Python library to communicate with the BitMyMoney exchange '

@@ -8,7 +8,7 @@ import getpass
 here = os.path.dirname(os.path.dirname(__file__))
 sys.path.append(here)
 
-from bitmm.xwrap.client import XWrap
+from bitmm.exchange_wrapper.client import XWrap
 
 client = XWrap(baseurl='http://localhost:8001')
 apikey = raw_input('apikey: ')

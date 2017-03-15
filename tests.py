@@ -5,7 +5,7 @@ import requests
 import httplib
 import decimal
 
-from bitmm.xwrap import client
+from bitmm.exchange_wrapper import client
 
 
 class XWrapTestBase(TestCase):
