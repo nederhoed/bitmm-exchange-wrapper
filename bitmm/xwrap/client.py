@@ -7,6 +7,8 @@ import time
 
 from bitmm.tokenauth import utils as tokenauthutils
 
+from bitmmutils import lock as bitmmlock
+
 XWRAP_URL = 'https://xwrap.bitmymoney.com/'
 
 def toqs(data):
@@ -252,7 +254,8 @@ class Backend(object):
         return self._call('get_address/%s/' % (urllib.quote(asset),))
 
     def _call(self, path, method='get', **kwargs):
-        url = '%s/account/exchange/%s/%s' % (self.baseurl, self.id, path)
-        return call(
-            url, method, self.apikey, self.apisecret, data=kwargs,
-            allow_unverified_certs=self.allow_unverified_certs)
+        with bitmmlock.Lock('xwrap_client'):
+            url = '%s/account/exchange/%s/%s' % (self.baseurl, self.id, path)
+            return call(
+                url, method, self.apikey, self.apisecret, data=kwargs,
+                allow_unverified_certs=self.allow_unverified_certs)
